@@ -95,6 +95,8 @@ exactly 16 calls before being compiled down to a 100x-cheaper head.
 
 ## Open problems (take one and build it)
 
+See ROADMAP.md for a concrete build order
+
 1. **A real type system.** Here, grounding is a runtime check. The
    research version is static: soft-ness as a *typed effect* (like IO in
    Haskell), with `ground` as its elimination form, checked at compile

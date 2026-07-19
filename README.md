@@ -1,4 +1,4 @@
-# Prajna: an AI-native programming language, prototyped in ~450 lines
+# Prajna: an AI-native programming language
 
 **What if neural inference were a language primitive — but a typed,
 costed, verifiable one that the compiler tries to eliminate?**

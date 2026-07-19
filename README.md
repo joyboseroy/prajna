@@ -11,6 +11,8 @@ cheaper implementations wherever a contract allows), **accurate**
 (neural outputs cannot enter deterministic code without passing a
 verification gate), and **debuggable** (every run is bit-reproducible).
 
+New: a three-way benchmark against a hand-tuned FrugalGPT-style cascade, with an inference planner and a SQL-style explain(), lives in bench/
+
 ## Run it
 
 ```bash
@@ -65,7 +67,7 @@ the model. Inputs are encoded as rank-order N-of-M codes; writes
 superimpose onto counters at activated random hard locations; reads take
 a confidence-weighted vote. *Paraphrases* of previously answered inputs
 are served in microseconds, on CPU, with no model call — unlike exact
-memoisation, and cheaper than embedding-cosine caches (GPTCache-style).
+memoisation, and plausibly cheaper than embedding-cosine caches, unbenchmarked, see open problem 3.
 
 **6. Hot-path distillation.** `fn.relower()` folds high-confidence
 traces back into the example set and re-runs the lowering ladder. A
@@ -133,6 +135,10 @@ rank-order N-of-M codes (Furber et al., IEEE TNN 2007). The combination
 — graded types + contract lowering + deterministic replay +
 associative-memory caching — has, to our knowledge, not been unified in
 one language design.
+
+## Writing
+
+https://medium.com/@joyboseroy/programming-languages-assume-computers-are-deterministic-ai-doesnt-661b2029b04c
 
 ## Files
 

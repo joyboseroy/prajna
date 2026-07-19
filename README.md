@@ -140,6 +140,8 @@ one language design.
 
 https://medium.com/@joyboseroy/programming-languages-assume-computers-are-deterministic-ai-doesnt-661b2029b04c
 
+https://joyboseroy.medium.com/where-an-ai-native-programming-model-beats-python-and-where-it-should-not-try-b5c2f06b0205
+
 ## Files
 
 - `prajna.py` — the DSL: Belief, ground, RankOrderEncoder, SDMCache,

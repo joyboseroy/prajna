@@ -71,6 +71,7 @@ class PlannedSemFunction(SemFunction):
                        for t, l in sample) / len(sample))
         self.plan_compile_cost = len(sample) * LLM_COST
         best = None
+        best_effort = None    # max est_acc across ALL taus, feasible or not
         self.plan_candidates = []
         for cls in self.ladder:
             impl = cls().fit(X, y)
@@ -99,15 +100,32 @@ class PlannedSemFunction(SemFunction):
                 if cand["feasible"] and (best is None
                                          or exp_cost < best["exp_cost"]):
                     best = cand
+                if best_effort is None or cand["est_acc"] > best_effort["est_acc"] \
+                        or (cand["est_acc"] == best_effort["est_acc"]
+                            and exp_cost < best_effort["exp_cost"]):
+                    best_effort = cand
             if level_best is None:
                 level_best = dict(level=cls.name, tau=None, est_acc=None,
                                   solo_acc=solo_acc, feasible=False,
                                   exp_cost=None, frac_llm=None)
             self.plan_candidates.append(level_best)
         self.llm_est_acc = llm_acc
-        if best is None:   # nothing meets contract: link the LLM alone
-            best = dict(impl=None, level="llm", tau=1.0,
-                        exp_cost=LLM_COST, est_acc=llm_acc, frac_llm=1.0)
+        # also consider pure LLM explicitly (may not appear on the tau grid)
+        pure_llm = dict(impl=None, level="llm", tau=1.0, exp_cost=LLM_COST,
+                        est_acc=llm_acc, frac_llm=1.0,
+                        feasible=llm_acc >= self.contract_accuracy)
+        if best_effort is None or pure_llm["est_acc"] > best_effort["est_acc"]:
+            best_effort = pure_llm
+        self.contract_met = best is not None
+        if best is None:
+            # NOTHING meets the contract: best-effort, not pure LLM by default
+            best = best_effort
+            if self.verbose:
+                print(f"  [plan] {self.name}: CONTRACT INFEASIBLE "
+                      f"(best achievable est_acc={best['est_acc']:.3f} "
+                      f"< target {self.contract_accuracy:.2f}); "
+                      f"using best-effort plan: {best['level']} "
+                      f"tau={best.get('tau')}")
         self.plan = best
         self.impl_version = f"planned-{best['level']}-tau{best['tau']:.2f}"
         if self.verbose:
@@ -138,11 +156,13 @@ class PlannedSemFunction(SemFunction):
     def explain(self, effects=None):
         """Cognitive execution plan, in the spirit of SQL EXPLAIN."""
         p = self.plan
+        status = "MET (dev estimate)" if getattr(self, "contract_met", True) \
+            else "NOT MET — best-effort plan shown"
         out = [f"COGNITIVE EXECUTION PLAN: {self.name}",
                "",
                "Contract:",
                f"  estimated end-to-end accuracy >= "
-               f"{self.contract_accuracy:.2f}   [STATISTICAL]",
+               f"{self.contract_accuracy:.2f}   [STATISTICAL]   [{status}]",
                f"  objective: minimise expected cost per call",
                "",
                "Candidates considered (best feasible tau per level):"]

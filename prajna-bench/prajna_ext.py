@@ -144,11 +144,15 @@ class PlannedSemFunction(SemFunction):
             b = p["impl"].predict(text)
             if b.confidence < p["tau"]:
                 v = self._planner_llm.classify(text, _true)
-                b = Belief(v, 0.95, f"{b.source}->escalated:llm",
-                           b.cost + LLM_COST)
+                # calibrated: confidence assigned to an escalated call is
+                # the MEASURED dev-sample accuracy of the LLM, not a
+                # hardcoded constant that happens to equal the action
+                # threshold and trivially clears it either way.
+                b = Belief(v, self.llm_est_acc,
+                           f"{b.source}->escalated:llm", b.cost + LLM_COST)
         else:
             v = self._planner_llm.classify(text, _true)
-            b = Belief(v, 0.95, "llm", LLM_COST)
+            b = Belief(v, self.llm_est_acc, "llm", LLM_COST)
         self.traces.put(k, self.name, text, b)
         return b
 

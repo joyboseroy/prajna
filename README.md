@@ -4,6 +4,8 @@ What if neural inference were a language primitive — but a typed, costed, veri
 
 This repo is a runnable semantics prototype (an embedded Python DSL) of an AI-native language design. It is deliberately small. The point is not the implementation; the point is the six mechanisms, which together make programs that use LLMs fast (the compiler replaces the LLM with cheaper implementations wherever a contract allows), accurate (neural outputs cannot enter deterministic code without passing a verification gate), and debuggable (every run is bit-reproducible).
 
+New: a three-way benchmark against a hand-tuned cascade, on real Llama 3.3 70B API results, lives in prajna-bench/
+
 ## Run it
 
 ```bash
@@ -34,7 +36,7 @@ classify = sem("classify_intent", examples=[...], llm=oracle,
 
 **4. Deterministic replay.** Every soft call is memoised against (function, implementation-version, input). Identical runs are bit-identical and free. The trace store doubles as the distillation dataset.
 
-**5. SDM semantic cache.** A sparse distributed memory sits in front of the model. Inputs are encoded as rank-order N-of-M codes; writes superimpose onto counters at activated random hard locations; reads take a confidence-weighted vote. Paraphrases of previously answered inputs are served in microseconds, on CPU, with no model call — unlike exact memoisation, and cheaper than embedding-cosine caches (GPTCache-style).
+**5. SDM semantic cache.** A sparse distributed memory sits in front of the model. Inputs are encoded as rank-order N-of-M codes; writes superimpose onto counters at activated random hard locations; reads take a confidence-weighted vote. Paraphrases of previously answered inputs are served in microseconds, on CPU, with no model call — unlike exact memoisation, and plausibly cheaper than embedding-cosine caches, unbenchmarked (see open problem 3 / roadmap).
 
 **6. Hot-path distillation.** `fn.relower()` folds high-confidence traces back into the example set and re-runs the lowering ladder. A function born as an LLM call dies as a tiny learned head.
 

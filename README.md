@@ -76,6 +76,12 @@ See ROADMAP.md for a concrete build order.
 
 DSPy (declarative LLM programs + optimizers ≈ mechanism 3 without the type discipline) · LMQL, Guidance (constrained decoding) · Instructor, Marvin (schema grounding) · Pyro, Church (probabilistic semantics) · GPTCache (semantic caching, embedding-based) · Kanerva's SDM and rank-order N-of-M codes (Furber et al., IEEE TNN 2007). The combination — graded types + contract lowering + deterministic replay + associative-memory caching — has, to our knowledge, not been unified in one language design.
 
+## Medium Articles
+
+Programming Languages Assume Computers Are Deterministic. AI Doesn’t. https://joyboseroy.medium.com/programming-languages-assume-computers-are-deterministic-ai-doesnt-661b2029b04c
+
+Where an AI-Native Programming Model Beats Python, and Where It Should Not Try: https://joyboseroy.medium.com/where-an-ai-native-programming-model-beats-python-and-where-it-should-not-try-b5c2f06b0205 
+
 ## Files
 
 - `prajna.py` — the DSL: Belief, ground, RankOrderEncoder, SDMCache, the lowering ladder, TraceStore, SemFunction.

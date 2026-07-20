@@ -42,6 +42,7 @@ def tune_threshold(pipe, dev, llm, target_acc):
     llm_acc = llm_hits / len(sample)
     tune_calls = len(sample)
     best = None
+    best_effort = None   # max estimated accuracy across ALL taus tried
     for tau in np.arange(0.20, 0.96, 0.02):
         keep = conf >= tau
         n_keep = int(keep.sum())
@@ -50,14 +51,22 @@ def tune_threshold(pipe, dev, llm, target_acc):
         est = head_acc * (1 - frac_llm) + llm_acc * frac_llm
         if est >= target_acc:
             if best is None or frac_llm < best[1]:
-                best = (float(tau), frac_llm)
-    tau = best[0] if best else 0.95
-    return tau, tune_calls
+                best = (float(tau), frac_llm, est)
+        if best_effort is None or est > best_effort[2]:
+            best_effort = (float(tau), frac_llm, est)
+    contract_met = best is not None
+    chosen = best if contract_met else best_effort
+    if not contract_met:
+        print(f"  [cascade] CONTRACT INFEASIBLE (best achievable "
+              f"est_acc={chosen[2]:.3f} < target {target_acc:.2f}); "
+              f"grid-searched best-effort tau={chosen[0]:.2f} "
+              f"(NOT the old hardcoded 0.95 default)")
+    return chosen[0], tune_calls, llm_acc
 
 
 def run(test, llm, fit, dev, target_acc=0.92):
     pipe = train_head(fit)
-    tau, tune_calls = tune_threshold(pipe, dev, llm, target_acc)
+    tau, tune_calls, llm_acc = tune_threshold(pipe, dev, llm, target_acc)
     preds, lat, cost, actions, deferred = [], [], 0.0, [], 0
     for text, true in test:
         proba = pipe.predict_proba([text])[0]
@@ -66,7 +75,8 @@ def run(test, llm, fit, dev, target_acc=0.92):
         c, l = HEAD_COST, HEAD_LATENCY_MS
         if conf < tau:
             label = llm.classify(text, true)
-            conf = 0.95  # engineer hard-codes trust in the big model
+            conf = llm_acc  # calibrated: measured LLM accuracy on dev
+                             # sample, not a hardcoded trust constant
             c += LLM_COST
             l += LLM_LATENCY_MS
         preds.append(label)
